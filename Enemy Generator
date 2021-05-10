@@ -1,0 +1,88 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GeneratorManager : MonoBehaviour
+{
+    [Header("Camera")]
+    [SerializeField] GameObject Camera;
+    GameObject[] Points;
+    GameObject Player;
+
+    [Header("Variables")]
+    [SerializeField] float SpawnFrequenty;
+    public float SpawnSpeed;
+    bool spawned;
+
+    [Header("Border Points")]
+    [SerializeField] GameObject RightSpawn;
+    [SerializeField] GameObject LeftSpawn;
+
+
+    [Header("Enemys Prefabs")]
+    [SerializeField] GameObject[] Enemy;
+
+    [Header("Spawn Point")]
+    GameObject Spawn;
+    RaycastHit2D hit;
+    float SpawnHeight;
+    void Start()
+    {
+        Player = GameObject.FindGameObjectWithTag("Player");
+        RightSpawn = GameObject.Find("RightSpawnPoint");
+        LeftSpawn = GameObject.Find("LeftSpawnPoint"); 
+    }
+    
+    IEnumerator Reset(float t)
+    {
+        yield return new WaitForSeconds(t * SpawnFrequenty);
+        spawned = false;
+    }
+    IEnumerator CheckProgress()
+    {
+        float X = Player.transform.position.x;
+        yield return new WaitForSeconds(4f);
+        float Y = Player.transform.position.x;
+        if(Y >= X)
+        {
+            SpawnFrequenty -= 0.02f * (Y-X);
+        }
+        if(SpawnFrequenty < 0.1f)
+        {
+            SpawnFrequenty = 0.1f;
+        }
+    }
+    void Update()
+    {
+        if (Player.GetComponent<PlayerRage>().CanAddRage)
+        {
+            SpawnSpeed = Player.GetComponent<PlayerRage>().NormalSpawnSpeed;
+        }
+        else
+        {
+            SpawnSpeed = Player.GetComponent<PlayerRage>().RageSpawnSpeed;
+        }
+        if (!spawned)
+        { 
+            spawned = true;
+            int k = Random.Range(0, 3);
+            if (k == 0)
+            {
+                Spawn = LeftSpawn;
+            }
+            else
+            {
+                Spawn = RightSpawn;
+            }
+            StartCoroutine(Reset(SpawnSpeed));
+            StartCoroutine(CheckProgress());
+            Vector3 Temp;
+            hit = Physics2D.Raycast(Spawn.transform.position, -Vector2.up);
+            SpawnHeight = hit.point.y;
+            Temp = Spawn.transform.position;
+            Temp.y = SpawnHeight + 3.2f;
+            Instantiate(Enemy[Random.Range(0, Enemy.Length)], new Vector3(Temp.x, Temp.y, Temp.z), Quaternion.identity);
+            SpawnFrequenty += 0.11f;  //Faster progress means faster enemy spawn. Calculate every frame.
+        }  
+    }
+}
